@@ -14,10 +14,10 @@ def parseCsvFile(filePath):
         return data
         
     except FileNotFoundError:
-        print(f'# erro: arquivo nao encontrado em {filePath}')
+        print(f'erro: arquivo nao encontrado em {filePath}')
         return []
     except Exception as e:
-        print(f'# erro ao ler o arquivo csv: {e}')
+        print(f'erro ao ler o arquivo csv: {e}')
         return []
 
 # funcoes especificas podem ser criadas se necessario
@@ -32,6 +32,6 @@ def loadSupplies(filePath='data/suprimentos.csv'):
             item['utilidade'] = int(item['utilidade'])
             processedSupplies.append(item)
         except (ValueError, KeyError) as e:
-            print(f'# aviso: pulando item mal formatado: {item} ({e})')
+            print(f'aviso: pulando item mal formatado: {item} ({e})')
             
     return processedSupplies

@@ -29,3 +29,32 @@ Este repositório contém a implementação do sistema "O Arquivo de Rivendell",
 * **Justificativa:** O problema é uma variação do "Problema da Mochila" (Knapsack Problem). Temos itens com `peso` e `utilidade` (valor) e uma `capacidade máxima`. Queremos maximizar a utilidade total.
     * Se pudermos pegar frações de itens, este é o "Problema da Mochila Fracionária", que é resolvido otimamente por um algoritmo guloso: calcular a razão `utilidade/peso` de cada item, ordenar os itens por essa razão (do maior para o menor) e pegar o máximo possível de cada item nessa ordem.
     * Se os itens são indivisíveis, um algoritmo guloso não garante a solução ótima (que exigiria programação dinâmica), mas é uma exigência do projeto usar um algoritmo guloso. Portanto, aplicamos a estratégia gulosa (ordenar por razão `utilidade/peso`) como a solução para este módulo.
+    
+---
+
+### Definir Chave API
+
+É necessário possuir uma chave de API da **The One API** para usar este programa.
+
+1.  Obtenha sua chave [neste link](https://the-one-api.dev).
+2.  Após obter sua chave, configure-a como uma variável de ambiente no seu terminal.
+
+---
+
+#### Linux / macOS
+
+```bash
+export THE_ONE_API_KEY="SUA-CHAVE-API-AQUI"
+```
+
+#### Windows (CMD)
+```bash
+set THE_ONE_API_KEY=SUA-CHAVE-API-AQUI
+```
+
+#### Windows (Powershell)
+```bash
+$env:THE_ONE_API_KEY = "SUA-CHAVE-API-AQUI"
+```
+
+**Nota Importante**: Os comandos acima definem a chave apenas para a sessão atual do terminal.
