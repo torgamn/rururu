@@ -1,4 +1,3 @@
-# esboco funcao modulo 4
 def solveGreedyKnapsack(supplies, maxCapacity):
     # supplies e uma lista de dicionarios
     # calcular a razao (utilidade/peso) para cada item
@@ -6,7 +5,8 @@ def solveGreedyKnapsack(supplies, maxCapacity):
         if item['peso'] > 0:
             item['ratio'] = item['utilidade'] / item['peso']
         else:
-            item['ratio'] = float('inf') # utilidade infinita se peso zero
+            # utilidade infinita se peso zero (pegar sempre)
+            item['ratio'] = float('inf') 
             
     # ordenar os itens pela razao, em ordem decrescente
     sortedSupplies = sorted(supplies, key=lambda x: x['ratio'], reverse=True)
@@ -15,26 +15,16 @@ def solveGreedyKnapsack(supplies, maxCapacity):
     totalWeight = 0
     adventureBag = []
     
-    # iterar pelos itens ordenados e adicionar na bolsa
     for item in sortedSupplies:
-        # assumindo mochila fracionaria podemos pegar parte do item
         
+        # verifica se o item inteiro cabe na capacidade restante
         if totalWeight + item['peso'] <= maxCapacity:
             # pega o item inteiro
             totalWeight += item['peso']
             totalUtility += item['utilidade']
             adventureBag.append((item['nome'], 1.0)) # (nome, 100% do item)
             
-        else:
-            # pega apenas a fracao que cabe
-            remainingCapacity = maxCapacity - totalWeight
-            fraction = remainingCapacity / item['peso']
-            
-            totalWeight += remainingCapacity
-            totalUtility += item['utilidade'] * fraction
-            adventureBag.append((item['nome'], fraction)) # (nome, fracao do item)
-            
-            # a bolsa esta cheia, para o loop
-            break 
+        # se o item nao couber e ignorado
+        # checa proximo items
             
     return (totalUtility, totalWeight, adventureBag)
