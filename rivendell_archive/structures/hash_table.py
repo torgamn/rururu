@@ -3,16 +3,16 @@ class HashTable:
     def __init__(self, initialCapacity=10):
         self.capacity = initialCapacity
         self.size = 0
-        # cada elemento da tabela agora e uma lista (para tratar colisoes por encadeamento)
+        # cada elemento da tabela agora e uma lista
         self.table = [[] for _ in range(self.capacity)]
+        # fator de carga limite
+        self.loadFactorThreshold = 0.7
 
     def _hash(self, key):
-        # metodo privado para calcular o hash da chave
-        # implementacao de hash simples (soma dos valores unicode)
+        # implementacao do hash (soma dos valores unicode)
         hashValue = 0
         for char in str(key):
             hashValue += ord(char)
-        # deve retornar um indice dentro de self.capacity
         return hashValue % self.capacity
 
     def insert(self, key, value):
@@ -31,11 +31,9 @@ class HashTable:
         bucket.append((key, value))
         self.size += 1
         
-        # deve checar se precisa de redimensionamento (fator de carga)
-        # (aqui ocorreria a analise amortizada) - deixado para depois
-        # if (self.size / self.capacity) > 0.7:
-        #     self._resize()
-        pass
+        # checa se precisa de redimensionamento (fator de carga)
+        if (self.size / self.capacity) > self.loadFactorThreshold:
+            self._resize()
 
     def search(self, key):
         # busca um valor pela chave
@@ -63,9 +61,17 @@ class HashTable:
                 self.size -= 1
                 return existingValue
         
-        # se nao encontrou, nao faz nada
         return None
         
     def _resize(self):
-        # metodo privado para redimensionar a tabelaquando o fator de carga e muito alto
-        pass
+        #print(f'DEBUG redimensionando tabela de {self.capacity} para {self.capacity * 2}...')
+        
+        oldTable = self.table
+        self.capacity *= 2 # dobra a capacidade
+        self.size = 0 # reseta o tamanho (incrementa novamente nos inserts)
+        self.table = [[] for _ in range(self.capacity)]
+        
+        # reinsere todos os itens da tabela antiga na nova
+        for bucket in oldTable:
+            for key, value in bucket:
+                self.insert(key, value)

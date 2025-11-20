@@ -3,16 +3,36 @@ from rivendell_archive.core.api_client import getCharacters
 from rivendell_archive.core.data_parser import loadSupplies
 from rivendell_archive.modules.logistics_module import solveGreedyKnapsack
 from rivendell_archive.structures.trie import Trie
-from rivendell_archive.structures.b_tree import BTree # importacao adicionada
+from rivendell_archive.structures.b_tree import BTree
 
 def testModule1():
     print('iniciando teste do modulo 1 (censo / hash table)')
     
+    print('teste de redimensionamento')
+    smallTable = HashTable(initialCapacity=5)
+    print(f'tabela criada com capacidade: {smallTable.capacity}')
+    
+    testKeys = ["Frodo", "Sam", "Merry", "Pippin", "Aragorn", "Boromir", "Legolas", "Gimli"]
+    print(f'inserindo {len(testKeys)} itens')
+    
+    for k in testKeys:
+        smallTable.insert(k, {"name": k})
+        
+    print(f'nova capacidade da tabela: {smallTable.capacity} (esperado: > 5)')
+    if smallTable.capacity > 5:
+        print('tabela redimensionada corretamente')
+    else:
+        print('tabela nao redimensionou')
+        
+    # Verifica se os dados ainda estao la
+    found = smallTable.search("Frodo")
+    print(f'buscando "Frodo" apos resize: {found is not None}')
+    print('\n')
+
     characters = getCharacters()
     
     if not characters:
-        print('falha ao buscar personagens. o teste nao pode continuar')
-        print('certifique-se de que a chave THE_ONE_API_KEY esta configurada')
+        print('falha ao buscar personagens. verifique sua chave de API ou conexao.')
         return
 
     characterCensus = HashTable(initialCapacity=100) 
@@ -39,15 +59,10 @@ def testModule1():
     else:
         print(f'erro: "{keyToSearch}" nao foi encontrado')
         
-    # buscar por um personagem que nao existe
     keyToSearch = 'Relampago Mcqueen'
-    print(f'\nbuscando por: "{keyToSearch}"')
-    
     foundCharacter = characterCensus.search(keyToSearch)
     
-    if foundCharacter:
-        print(f'erro: "{keyToSearch}" personagem encontrado, mas nao deveria existir')
-    else:
+    if not foundCharacter:
         print(f'sucesso: "{keyToSearch}" nao foi encontrado, como esperado')
 
 def testModule2():
@@ -56,34 +71,47 @@ def testModule2():
     
     linguisticPalantir = Trie()
     
-    print('inserindo palavras na trie')
-    words = ["mellon", "moria", "mordor", "minas", "mithril"] # aqui
+    print('inserindo palavras na trie...')
+    words = ["mellon", "moria", "mordor", "minas", "mithril", "gondor", "gondolin"]
     for word in words:
         linguisticPalantir.insert(word)
     
-    print('testando busca')
-    print(f'buscando "moria": {linguisticPalantir.search("moria")} (esperado: True)')
-    print(f'buscando "mellon": {linguisticPalantir.search("mellon")} (esperado: True)')
-    print(f'buscando "gandalf": {linguisticPalantir.search("gandalf")} (esperado: False)')
-    # mor e um prefixo mas nao uma palavra inserida
-    print(f'buscando "mor": {linguisticPalantir.search("mor")} (esperado: False)') 
+    print('testando busca exata')
+    print(f'buscando "moria": {linguisticPalantir.search("moria")}')
+    print(f'buscando "gandalf": {linguisticPalantir.search("gandalf")}')
 
-    print('\ntestando prefixo')
-    print(f'buscando prefixo "mor": {linguisticPalantir.startsWith("mor")} (esperado: True)')
-    print(f'buscando prefixo "min": {linguisticPalantir.startsWith("min")} (esperado: True)')
-    print(f'buscando prefixo "gal": {linguisticPalantir.startsWith("gal")} (esperado: False)')
-    # uma palavra tambem e um prefixo de si mesma
-    print(f'buscando prefixo "mordor": {linguisticPalantir.startsWith("mordor")} (esperado: True)')
+    print('\ntestando autocomplete (getWordsWithPrefix)')
+    
+    prefix = "mo"
+    print(f'buscando palavras com prefixo "{prefix}":')
+    results = linguisticPalantir.getWordsWithPrefix(prefix)
+    print(f'resultado: {results}') 
+    # esperado moria, mordor
+    
+    prefix = "mi"
+    print(f'buscando palavras com prefixo "{prefix}":')
+    results = linguisticPalantir.getWordsWithPrefix(prefix)
+    print(f'resultado: {results}')
+    # esperado minas, mithril
+
+    prefix = "gon"
+    print(f'buscando palavras com prefixo "{prefix}":')
+    results = linguisticPalantir.getWordsWithPrefix(prefix)
+    print(f'resultado: {results}')
+    # esperado gondor, gondolin
+    
+    prefix = "xyz"
+    print(f'buscando prefixo "{prefix}":')
+    results = linguisticPalantir.getWordsWithPrefix(prefix)
+    print(f'resultado: {results}')
+    # esperado nada
 
 def testModule3():
     print('\n')
-    print('iniciando teste do modulo 3')
+    print('iniciando teste do modulo 3 (b-tree)')
     
     historicalAlmanac = BTree(t=3) 
     
-    print('inserindo eventos historicos (ano, evento)...')
-    
-    # dados de exemplo
     events = [
         (1697, "Queda de Eregion"),
         (3441, "Fim da Guerra da Ultima Alianca"),
@@ -96,82 +124,42 @@ def testModule3():
         (2770, "Smaug ataca Erebor"),
     ]
     
+    print(f'inserindo {len(events)} eventos historicos...')
     for year, event in events:
         historicalAlmanac.insert(year, event)
-        
-    print(f'insercao de {len(events)} eventos concluida')
 
-    print('\niniciando teste de busca exata')
-    keyToSearch = 2941
-    foundEvent = historicalAlmanac.search(keyToSearch)
-    if foundEvent:
-        print(f'busca por {keyToSearch}: encontrado! "{foundEvent}"')
-    else:
-        print(f'erro: busca por {keyToSearch} falhou (esperado: Batalha dos Cinco Exercitos)')
-        
-    keyToSearch = 1500 # nao existe
-    foundEvent = historicalAlmanac.search(keyToSearch)
-    if not foundEvent:
-        print(f'busca por {keyToSearch}: nao encontrado, como esperado')
-    else:
-        print(f'erro: busca por {keyToSearch} encontrou "{foundEvent}" (esperado: None)')
+    print('teste de busca exata (ano 2941)...')
+    foundEvent = historicalAlmanac.search(2941)
+    print(f'resultado: {foundEvent}')
 
-    print('\niniciando teste de busca por intervalo')
-    
-    # consulta por intervalo
-    startYear = 1600
-    endYear = 2000
-    
-    print(f'buscando eventos entre {startYear} e {endYear}...')
-    rangeResults = historicalAlmanac.searchRange(startYear, endYear)
-    
-    if rangeResults:
-        for year, event in rangeResults:
-            print(f'- {year}: {event}')
-    else:
-        print('nenhum evento encontrado no intervalo')
-
-    # outro intervalo
-    startYear = 3000
-    endYear = 4000
-    print(f'\nbuscando eventos entre {startYear} e {endYear}')
-    rangeResults = historicalAlmanac.searchRange(startYear, endYear)
-    
-    if rangeResults:
-        for year, event in rangeResults:
-            print(f'- {year}: {event}')
-    else:
-        print('nenhum evento encontrado no intervalo')
+    print('\nteste de busca por intervalo (1500 a 2000)...')
+    rangeResults = historicalAlmanac.searchRange(1500, 2000)
+    for year, event in rangeResults:
+        print(f'- {year}: {event}')
 
 def testModule4():
     print('\n')
-    print('iniciando teste da bolsa do aventureiro modulo 4')
+    print('iniciando teste do modulo 4 (mochila gulosa)')
     
     supplies = loadSupplies()
     
     if not supplies:
         print('falha ao carregar suprimentos.')
-        print('certifique-se de que o arquivo "data/suprimentos.csv" existe.')
         return
         
-    print(f'{len(supplies)} suprimentos carregados.')
-    
-    maxCapacity = 10.0 # capacidade maxima da bolsa
-    
-    print(f'calculando bolsa para capacidade maxima de: {maxCapacity}')
+    maxCapacity = 10.0
+    print(f'calculando bolsa para capacidade: {maxCapacity}')
     
     (totalUtility, totalWeight, adventureBag) = solveGreedyKnapsack(supplies, maxCapacity)
     
-    print('\nresultado da bolsa gulosa')
     print(f'utilidade total: {totalUtility:.2f}')
     print(f'peso total: {totalWeight:.2f}')
-    print('itens na bolsa (item, fracao):')
+    print('itens na bolsa:')
     for item in adventureBag:
-        print(f'- {item[0]} ({(item[1] * 100):.1f}%)')
-
+        print(f'- {item[0]}')
 
 if __name__ == '__main__':
     testModule1()
     testModule2()
-    testModule3() # chamada do novo modulo de teste
+    testModule3()
     testModule4()

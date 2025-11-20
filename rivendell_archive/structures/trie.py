@@ -42,5 +42,23 @@ class Trie:
         return True
         
     def getWordsWithPrefix(self, prefix):
-        # ver mais avancada de autocomplete
-        pass
+        # encontra o no correspondente ao prefixo
+        node = self.root
+        for char in prefix:
+            if char not in node.children:
+                return []
+            node = node.children[char]
+            
+        # a partir deste no faz uma busca em profundidade para encontrar todas as palavras (dfs)
+        results = []
+        self._dfs(node, prefix, results)
+        return results
+
+    def _dfs(self, node, currentPrefix, results):
+        # se o no atual marca o fim de uma palavra adiciona aos resultados
+        if node.isEndOfWord:
+            results.append(currentPrefix)
+            
+        # segue busca recursiva para todos os filhos
+        for char, childNode in node.children.items():
+            self._dfs(childNode, currentPrefix + char, results)
