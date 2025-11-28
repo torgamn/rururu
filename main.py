@@ -9,7 +9,7 @@ from rivendell_archive.core.data_parser import loadSupplies
 
 class RivendellArchiveApp:
     def __init__(self):
-        print("inicializando o arquivo de rivendell...")
+        print("Inicializando o arquivo de Rivendell...")
         
         # instanciando os modulos
         self.census = CensusModule()
@@ -50,7 +50,7 @@ class RivendellArchiveApp:
             print("4. Planejar Logistica (Mochila Gulosa)")
             print("0. Sair")
             
-            choice = input("escolha uma opcao: ")
+            choice = input("Escolha uma opção: ")
             
             if choice == '1':
                 self._runCensusMenu()
@@ -61,13 +61,13 @@ class RivendellArchiveApp:
             elif choice == '4':
                 self._runLogisticsMenu()
             elif choice == '0':
-                print("encerrando o sistema.")
+                print("Encerrando o Sistema.")
                 break
             else:
-                print("opcao invalida.")
+                print("Opção invalida.")
 
     def _runCensusMenu(self):
-        name = input("digite o nome do personagem para buscar: ")
+        name = input("Digite o nome do personagem para buscar: ")
         result = self.census.searchEntity(name)
         if result:
             print("\nREGISTRO ENCONTRADO")
@@ -77,66 +77,66 @@ class RivendellArchiveApp:
             if 'wikiUrl' in result:
                 print(f"Wiki: {result['wikiUrl']}")
         else:
-            print("personagem nao encontrado no arquivo.")
+            print("Personagem não encontrado no arquivo.")
 
     def _runLanguageMenu(self):
-        prefix = input("digite o inicio da palavra (prefixo): ")
+        prefix = input("Digite o inicio da palavra (prefixo): ")
         results = self.language.searchPrefix(prefix)
         if results:
-            print(f"\npalavras encontradas com '{prefix}':")
+            print(f"\nPalavras encontradas com '{prefix}':")
             for word in results:
                 print(f"- {word}")
         else:
-            print("nenhuma palavra correspondente encontrada.")
+            print("Nenhuma palavra correspondente encontrada.")
 
     def _runHistoryMenu(self):
         print("1. Buscar ano especifico")
         print("2. Buscar intervalo de tempo")
-        subChoice = input("opcao: ")
+        subChoice = input("Opção: ")
         
         try:
             if subChoice == '1':
-                year = int(input("digite o ano: "))
+                year = int(input("Digite o ano: "))
                 event = self.history.findEventByYear(year)
                 if event:
-                    print(f"\nevento em {year}: {event}")
+                    print(f"\nEvento em {year}: {event}")
                 else:
-                    print("nenhum evento registrado neste ano.")
+                    print("Nenhum evento registrado neste ano.")
             elif subChoice == '2':
-                start = int(input("ano inicial: "))
-                end = int(input("ano final: "))
+                start = int(input("Ano inicial: "))
+                end = int(input("Ano final: "))
                 results = self.history.findEventsInPeriod(start, end)
                 if results:
-                    print(f"\neventos entre {start} e {end}:")
+                    print(f"\nEventos entre {start} e {end}:")
                     for year, event in results:
                         print(f"[{year}] {event}")
                 else:
-                    print("nenhum evento encontrado neste periodo.")
+                    print("Nenhum evento encontrado neste periodo.")
         except ValueError:
-            print("por favor digite apenas numeros para os anos.")
+            print("Por favor digite apenas numeros para os anos.")
 
     def _runLogisticsMenu(self):
-        print("carregando suprimentos...")
+        print("Carregando suprimentos...")
         supplies = loadSupplies() # carrega do csv
         
         if not supplies:
-            print("erro ao carregar arquivo de suprimentos.")
+            print("Erro ao carregar arquivo de suprimentos.")
             return
 
         try:
-            capacity = float(input("digite a capacidade maxima da mochila (peso): "))
+            capacity = float(input("Digite a capacidade maxima da mochila (peso): "))
             (totalUtil, totalWeight, items) = solveGreedyKnapsack(supplies, capacity)
             
             print("\nPLANO LOGISTICO")
-            print(f"capacidade maxima: {capacity}")
-            print(f"peso Total ocupado: {totalWeight:.2f}")
-            print(f"utilidade total: {totalUtil:.2f}")
-            print("itens selecionados:")
+            print(f"Capacidade maxima: {capacity}")
+            print(f"Peso Total ocupado: {totalWeight:.2f}")
+            print(f"Utilidade total: {totalUtil:.2f}")
+            print("Itens selecionados:")
             for name, fraction in items:
                 print(f"- {name}")
                 
         except ValueError:
-            print("erro: valor invalido para peso.")
+            print("Erro: valor invalido para peso.")
 
 if __name__ == "__main__":
     app = RivendellArchiveApp()
