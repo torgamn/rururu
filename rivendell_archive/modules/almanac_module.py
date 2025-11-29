@@ -1,33 +1,30 @@
 from rivendell_archive.structures.b_tree import BTree
+from rivendell_archive.core.data_parser import parseCsvFile
 
 class AlmanacModule:
     def __init__(self, t=3):
         # t define o grau minimo da arvore b
         self.chronicles = BTree(t)
 
-    def loadDefaultEvents(self):
-        # carrega uma lista de eventos importantes
-        # isso poderia vir de um arquivo grande
-        events = [
-            (1000, "chegada dos istari (magos) a terra-media"),
-            (1600, "fundacao do condado pelos hobbits"),
-            (1697, "queda de eregion e morte de celebrimbor"),
-            (1980, "despertar do balrog em moria"),
-            (2463, "smeagol (gollum) encontra o anel"),
-            (2510, "eorl o jovem cavalga para o campo de celebrant (origem de rohan)"),
-            (2770, "smaug o dourado ataca e toma erebor"),
-            (2931, "nascimento de aragorn filho de arathorn"),
-            (2941, "batalha dos cinco exercitos e morte de smaug"),
-            (3001, "festa de aniversario de bilbo baggins"),
-            (3018, "conselho de elrond e formacao da sociedade"),
-            (3019, "destruicao do um anel e queda de sauron"),
-            (3021, "partida dos portadores do anel nos portos cinzentos")
-        ]
+    def loadEvents(self, filePath='data/events.csv'):
+        # carrega os eventos historicos do arquivo csv
+        # utiliza o parser padrao do sistema
+        eventsData = parseCsvFile(filePath)
         
-        for year, description in events:
-            self.chronicles.insert(year, description)
+        count = 0
+        if eventsData:
+            for row in eventsData:
+                try:
+                    year = int(row['year'])
+                    description = row['description']
+                    
+                    self.chronicles.insert(year, description)
+                    count += 1
+                except (ValueError, KeyError):
+                    # ignora linhas mal formatadas
+                    continue
             
-        print(f"almanaque historico: {len(events)} eventos registrados.")
+        print(f"almanaque historico: {count} eventos registrados.")
 
     def findEventByYear(self, year):
         # busca exata na arvore b

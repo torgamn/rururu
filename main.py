@@ -23,9 +23,6 @@ class RivendellArchiveApp:
         # carrega hash table
         self.census.loadData()
         
-        # popula o modulo de linguagem (trie) com nomes do censo
-        # extrai todos os nomes da tabela hash para usar como base linguistica
-        # acessamos a tabela interna apenas para popular a trie
         namesToIndex = []
         for bucket in self.census.censusData.table:
             for key, value in bucket:
@@ -38,8 +35,8 @@ class RivendellArchiveApp:
         
         self.language.indexTextData(namesToIndex)
         
-        # carrega historia (b-tree)
-        self.history.loadDefaultEvents()
+        # carrega (b-tree)
+        self.history.loadEvents()
 
     def run(self):
         while True:

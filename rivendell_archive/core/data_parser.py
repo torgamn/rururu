@@ -21,15 +21,15 @@ def parseCsvFile(filePath):
         return []
 
 # funcoes especificas podem ser criadas se necessario
-def loadSupplies(filePath='data/suprimentos.csv'):
+def loadSupplies(filePath='data/supplies.csv'):
     # le e converte os valores numericos
     supplies = parseCsvFile(filePath)
     processedSupplies = []
     for item in supplies:
         try:
-            # converte peso e utilidade para numeros
-            item['peso'] = float(item['peso'])
-            item['utilidade'] = int(item['utilidade'])
+            # converte peso e utilidade para numeros (agora em ingles)
+            item['weight'] = float(item['weight'])
+            item['utility'] = int(item['utility'])
             processedSupplies.append(item)
         except (ValueError, KeyError) as e:
             print(f'aviso: pulando item mal formatado: {item} ({e})')
