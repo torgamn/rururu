@@ -5,6 +5,8 @@ from rivendell_archive.modules.census_module import CensusModule
 from rivendell_archive.modules.linguistic_module import LinguisticModule
 from rivendell_archive.modules.almanac_module import AlmanacModule
 from rivendell_archive.modules.logistics_module import solveGreedyKnapsack
+from rivendell_archive.modules.map_module import MapModule
+from rivendell_archive.modules.relationship_module import RelationshipModule
 from rivendell_archive.core.data_parser import loadSupplies
 
 class RivendellArchiveApp:
@@ -15,6 +17,8 @@ class RivendellArchiveApp:
         self.census = CensusModule()
         self.language = LinguisticModule()
         self.history = AlmanacModule()
+        self.map = MapModule()
+        self.relations = RelationshipModule()
         
         # carregamento inicial de dados
         self._initializeData()
@@ -24,10 +28,11 @@ class RivendellArchiveApp:
         self.census.loadData()
         
         namesToIndex = []
-        for bucket in self.census.censusData.table:
-            for key, value in bucket:
-                if isinstance(key, str):
-                    namesToIndex.append(key)
+        # utiliza o novo metodo toList da hash table para pegar nomes
+        censusItems = self.census.censusData.toList()
+        for key, value in censusItems:
+            if isinstance(key, str):
+                namesToIndex.append(key)
         
         # adiciona algumas palavras elficas comuns tambem
         elvishWords = ["Mellon", "Moria", "Anduril", "Galadhrim", "Lothlorien", "Rivendell", "Mithril"]
@@ -37,6 +42,9 @@ class RivendellArchiveApp:
         
         # carrega (b-tree)
         self.history.loadEvents()
+        
+        # carrega o mapa (milestone 1)
+        self.map.loadMapData()
 
     def run(self):
         while True:
@@ -45,6 +53,8 @@ class RivendellArchiveApp:
             print("2. Decifrar Inscricao (Autocomplete)")
             print("3. Consultar Almanaque Historico (Eventos)")
             print("4. Planejar Logistica (Mochila Gulosa)")
+            print("5. Definir Objetivo da Sociedade (Milestone 1)")
+            print("6. Analisar Relacoes (Personagens vs Historia) (Milestone 1)")
             print("0. Sair")
             
             choice = input("Escolha uma opção: ")
@@ -57,6 +67,10 @@ class RivendellArchiveApp:
                 self._runHistoryMenu()
             elif choice == '4':
                 self._runLogisticsMenu()
+            elif choice == '5':
+                self._runObjectiveMenu()
+            elif choice == '6':
+                self._runRelationsMenu()
             elif choice == '0':
                 print("Encerrando o Sistema.")
                 break
@@ -134,6 +148,33 @@ class RivendellArchiveApp:
                 
         except ValueError:
             print("Erro: valor invalido para peso.")
+
+    def _runObjectiveMenu(self):
+        print("\nDEFINIR PROPOSITO DA JORNADA")
+        print("1. Destruir o Um Anel (Minimizar tempo/risco)")
+        print("2. Explorar a Terra Media (Maximizar novos locais)")
+        print("3. Visitar Locais Historicos (Foco em conhecimento)")
+        print("4. Enfraquecer o Mal (Buscar combate)")
+        
+        try:
+            choice = int(input("Escolha o objetivo prioritario (1-4): "))
+            self.map.setObjective(choice)
+        except ValueError:
+            print("Entrada invalida.")
+
+    def _runRelationsMenu(self):
+        # gera ou atualiza as relacoes
+        self.relations.buildRelations(self.census, self.history)
+        
+        searchName = input("\nDigite o nome de um personagem para ver sua historia (ou ENTER para voltar): ")
+        if searchName:
+            events = self.relations.getEntityRelations(searchName)
+            if events:
+                print(f"Eventos relacionados a {searchName}:")
+                for evt in events:
+                    print(f"- {evt}")
+            else:
+                print("Nenhum evento historico correlacionado encontrado.")
 
 if __name__ == "__main__":
     app = RivendellArchiveApp()

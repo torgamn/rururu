@@ -120,7 +120,6 @@ class BTree:
         newChild = BTreeNode(isLeaf=fullChild.isLeaf)
         
         # move a chave/valor do meio do fullChild para o parentNode
-        # (aqui ocorreria a analise amortizada)
         middleKey = fullChild.keys[self.t - 1]
         middleValue = fullChild.values[self.t - 1]
         
@@ -138,3 +137,25 @@ class BTree:
         fullChild.keys = fullChild.keys[:self.t - 1]
         fullChild.values = fullChild.values[:self.t - 1]
         fullChild.children = fullChild.children[:self.t]
+
+    def toList(self):
+        # retorna todos os itens da arvore em ordem (in-order traversal)
+        # util para o modulo de relacionamentos
+        items = []
+        self._toListRecursive(self.root, items)
+        return items
+
+    def _toListRecursive(self, node, items):
+        if not node:
+            return
+            
+        i = 0
+        while i < len(node.keys):
+            if not node.isLeaf:
+                self._toListRecursive(node.children[i], items)
+            
+            items.append((node.keys[i], node.values[i]))
+            i += 1
+            
+        if not node.isLeaf:
+            self._toListRecursive(node.children[i], items)

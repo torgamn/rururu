@@ -75,3 +75,11 @@ class HashTable:
         for bucket in oldTable:
             for key, value in bucket:
                 self.insert(key, value)
+
+    def toList(self):
+        # retorna uma lista de todos os valores armazenados (tuplas key, value)
+        allItems = []
+        for bucket in self.table:
+            for item in bucket:
+                allItems.append(item)
+        return allItems
