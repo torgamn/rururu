@@ -1,4 +1,5 @@
 from rivendell_archive.structures.graph import Graph
+import heapq # fila de prioridade para o dijkstra
 
 class MapModule:
     def __init__(self):
@@ -23,9 +24,6 @@ class MapModule:
 
     def loadMapData(self):
         # carrega os dados geograficos (locais e rotas)
-        # como nao temos um arquivo de rotas, vamos simular o carregamento 
-        # conectando locais classicos da terra-media com tempos base de viagem
-        
         print("Cartografia: desenhando o mapa da Terra-Media...")
         
         # vertices (locais)
@@ -56,17 +54,46 @@ class MapModule:
         countRoutes = 0
         for source, dest, weight in routes:
             # adiciona a aresta no grafo
-            # o peso final pode variar futuramente com base no objetivo
             self.middleEarthMap.addEdge(source, dest, weight)
-            
             # assumindo que as rotas sao de mao dupla para simplificar a navegacao basica
-            # mas mantendo o grafo direcionado internamente
             self.middleEarthMap.addEdge(dest, source, weight)
             countRoutes += 1
             
         print(f"Mapa carregado: {len(locations)} locais e {countRoutes * 2} conexoes mapeadas.")
 
+    def findShortestPath(self, startNode, endNode):
+        # milestone 2/6: algoritmo de dijkstra para menor caminho
+        print(f"Calculando rota de {startNode} para {endNode}...")
+        
+        # fila de prioridade armazena tuplas (custo, vertice_atual, caminho_percorrido)
+        queue = [(0, startNode, [])]
+        visited = set()
+        
+        while queue:
+            (cost, current, path) = heapq.heappop(queue)
+            
+            # se ja visitamos com um custo menor, ignora
+            if current in visited:
+                continue
+            
+            visited.add(current)
+            path = path + [current]
+            
+            # chegou ao destino
+            if current == endNode:
+                return (cost, path)
+            
+            # explora vizinhos
+            neighbors = self.middleEarthMap.getNeighbors(current)
+            if neighbors:
+                for neighbor, weight in neighbors:
+                    if neighbor not in visited:
+                        # aqui poderiamos ajustar o peso baseado no objetivo (penalidade)
+                        # por enquanto usamos o peso direto (tempo)
+                        heapq.heappush(queue, (cost + weight, neighbor, path))
+                        
+        return (float('inf'), []) # caminho nao encontrado
+
     def getWeightedEdge(self, weight, edgeAttributes=None):
-        # metodo placeholder para calcular peso baseado no objetivo (milestone 2)
-        # por enquanto retorna o peso base (tempo)
+        # metodo placeholder para calcular peso baseado no objetivo
         return weight

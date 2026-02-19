@@ -4,7 +4,7 @@ import sys
 from rivendell_archive.modules.census_module import CensusModule
 from rivendell_archive.modules.linguistic_module import LinguisticModule
 from rivendell_archive.modules.almanac_module import AlmanacModule
-from rivendell_archive.modules.logistics_module import solveGreedyKnapsack, solveDynamicKnapsack, optimizeBarter
+from rivendell_archive.modules.logistics_module import solveGreedyKnapsack, solveDynamicKnapsack, optimizeBarter, evaluateEncounter
 from rivendell_archive.modules.map_module import MapModule
 from rivendell_archive.modules.relationship_module import RelationshipModule
 from rivendell_archive.core.data_parser import loadSupplies
@@ -23,8 +23,9 @@ class RivendellArchiveApp:
         # carregamento inicial de dados
         self._initializeData()
         
-        # estado da mochila atual (para o modulo de escambo)
-        self.currentAdventureBag = [] 
+        # estado da mochila atual
+        self.currentAdventureBag = []
+        self.maxCapacity = 0.0
 
     def _initializeData(self):
         # carrega hash table
@@ -53,11 +54,12 @@ class RivendellArchiveApp:
         while True:
             print("\nO ARQUIVO DE RIVENDELL (MENU PRINCIPAL)")
             print("1. Consultar Censo (Personagens/Locais)")
-            print("2. Decifrar Inscricao (Autocomplete)")
+            print("2. Modulo Linguistico (Busca/Correcao)")
             print("3. Consultar Almanaque Historico (Eventos)")
-            print("4. Planejar Logistica (Mochila)")
+            print("4. Planejar Logistica (Mochila/Escambo/Encontros)")
             print("5. Definir Objetivo da Sociedade")
             print("6. Analisar Relacoes (Personagens vs Historia)")
+            print("7. Navegacao (Mapa/Dijkstra)")
             print("0. Sair")
             
             choice = input("Escolha uma opção: ")
@@ -74,6 +76,8 @@ class RivendellArchiveApp:
                 self._runObjectiveMenu()
             elif choice == '6':
                 self._runRelationsMenu()
+            elif choice == '7':
+                self._runMapMenu()
             elif choice == '0':
                 print("Encerrando o Sistema.")
                 break
@@ -94,14 +98,24 @@ class RivendellArchiveApp:
             print("Personagem não encontrado no arquivo.")
 
     def _runLanguageMenu(self):
-        prefix = input("Digite o inicio da palavra (prefixo): ")
-        results = self.language.searchPrefix(prefix)
-        if results:
-            print(f"\nPalavras encontradas com '{prefix}':")
-            for word in results:
-                print(f"- {word}")
-        else:
-            print("Nenhuma palavra correspondente encontrada.")
+        print("1. Busca por Prefixo (Autocomplete)")
+        print("2. Corretor Ortografico (Levenshtein)")
+        sub = input("Opcao: ")
+        
+        if sub == '1':
+            prefix = input("Digite o inicio da palavra: ")
+            results = self.language.searchPrefix(prefix)
+            if results:
+                print(f"\nPalavras encontradas com '{prefix}':")
+                for word in results:
+                    print(f"- {word}")
+            else:
+                print("Nenhuma palavra correspondente encontrada.")
+        elif sub == '2':
+            word = input("Digite a palavra para verificar: ")
+            (suggestion, dist) = self.language.checkSpelling(word)
+            print(f"\nEntrada: {word}")
+            print(f"Sugestao: {suggestion} (Distancia: {dist})")
 
     def _runHistoryMenu(self):
         print("1. Buscar ano especifico")
@@ -133,116 +147,107 @@ class RivendellArchiveApp:
         print("\n--- Modulo de Logistica ---")
         print("1. Otimizacao Gulosa (Mochila Fracionaria)")
         print("2. Otimizacao Avancada (Mochila 0/1 - Prog. Dinamica)")
-        print("3. Simular Escambo em Assentamento")
+        print("3. Simular Escambo (Troca em Assentamento)")
+        print("4. Encontro na Estrada (Avaliar novo item)")
         
         subChoice = input("Opcao: ")
         
-        print("Carregando suprimentos...")
-        supplies = loadSupplies() # carrega do csv
-        
-        if not supplies:
-            print("Erro ao carregar arquivo de suprimentos.")
-            return
+        # so carrega se nao tivermos uma mochila carregada ou se o usuario quiser resetar
+        if not self.currentAdventureBag and subChoice in ['1', '2']:
+            print("Carregando lista padrao de suprimentos...")
+            supplies = loadSupplies()
+            if not supplies:
+                return
+        else:
+            # usa a mochila atual para escambos e encontros
+            supplies = self.currentAdventureBag
+            if subChoice in ['1', '2']: # se escolher recriar, recarrega
+                supplies = loadSupplies()
 
         try:
             if subChoice == '1':
-                # metodo guloso antigo
-                capacity = float(input("Digite a capacidade maxima da mochila (peso): "))
-                (totalUtil, totalWeight, items) = solveGreedyKnapsack(supplies, capacity)
+                cap = float(input("Capacidade maxima: "))
+                (util, weight, items) = solveGreedyKnapsack(supplies, cap)
+                print(f"Mochila Gulosa montada. Util: {util}, Peso: {weight}")
                 
-                print("\nPLANO LOGISTICO (GULOSO)")
-                print(f"Capacidade maxima: {capacity}")
-                print(f"Peso Total ocupado: {totalWeight:.2f}")
-                print(f"Utilidade total: {totalUtil:.2f}")
-                print("Itens selecionados:")
-                for name, fraction in items:
-                    print(f"- {name} (Qtd: {fraction})")
-                    
             elif subChoice == '2':
-                # metodo programacao dinamica
-                capacity = float(input("Digite a capacidade maxima da mochila (peso): "))
-                (totalUtil, totalWeight, items) = solveDynamicKnapsack(supplies, capacity)
-                
-                # atualiza a mochila atual da aplicacao
+                cap = float(input("Capacidade maxima: "))
+                self.maxCapacity = cap # salva capacidade para usos futuros
+                (util, weight, items) = solveDynamicKnapsack(supplies, cap)
                 self.currentAdventureBag = items
-                
-                print("\nPLANO LOGISTICO (DINAMICO 0/1)")
-                print(f"Capacidade maxima: {capacity}")
-                print(f"Peso Total ocupado: {totalWeight:.2f}")
-                print(f"Utilidade total: {totalUtil:.2f}")
-                print("Itens selecionados:")
-                for item in items:
-                    print(f"- {item['name']} (Peso: {item['weight']}, Util: {item['utility']})")
+                print(f"\nMochila Dinamica Otimizada! Utilidade: {util}, Peso: {weight}")
+                for i in items: print(f"- {i['name']}")
 
             elif subChoice == '3':
-                # simulacao de escambo
                 if not self.currentAdventureBag:
-                    print("Sua mochila esta vazia. Execute a opcao 2 primeiro para enche-la.")
+                    print("Mochila vazia. Crie uma mochila (Opcao 2) antes.")
                     return
                 
-                print(f"\nVoce entra em um mercado anao.")
-                print(f"Itens na sua mochila: {len(self.currentAdventureBag)}")
-                
-                # itens disponiveis no mercador (mock)
+                print(f"Simulando mercado em Moria...")
                 merchantOffers = [
                     {"name": "Machado de Duas Maos", "weight": 4.5, "utility": 180},
-                    {"name": "Escudo de Ferro", "weight": 3.0, "utility": 90},
-                    {"name": "Barril de Cerveja", "weight": 5.0, "utility": 60}, # baixa utilidade/peso
-                    {"name": "Gema de Arkenstone (Replica)", "weight": 0.5, "utility": 120}
+                    {"name": "Escudo de Ferro", "weight": 3.0, "utility": 90}
                 ]
+                print("Ofertas: Machado (180 util), Escudo (90 util)")
                 
-                print("O mercador oferece:")
-                for mItem in merchantOffers:
-                    print(f"- {mItem['name']} (P: {mItem['weight']}, U: {mItem['utility']})")
-                
-                capacity = float(input("Confirme a capacidade maxima para o transporte pos-troca: "))
-                
-                (newUtil, newWeight, newItems) = optimizeBarter(self.currentAdventureBag, merchantOffers, capacity)
-                
-                print("\n--- RESULTADO DA TROCA OTIMIZADA ---")
-                print(f"Nova Utilidade Total: {newUtil} (Anterior: {sum(i['utility'] for i in self.currentAdventureBag)})")
-                print("Nova composicao da mochila:")
-                for item in newItems:
-                    # verifica se o item veio do mercador ou ja era nosso
-                    origin = "Mochila"
-                    for m in merchantOffers:
-                        if m['name'] == item['name']:
-                            origin = "MERCADO"
-                            break
-                    print(f"- [{origin}] {item['name']}")
-                
-                # atualiza a mochila
+                (util, weight, newItems) = optimizeBarter(self.currentAdventureBag, merchantOffers, self.maxCapacity)
                 self.currentAdventureBag = newItems
+                print(f"Troca realizada. Nova Utilidade: {util}")
+
+            elif subChoice == '4':
+                if not self.currentAdventureBag:
+                    print("Mochila vazia. Crie uma mochila (Opcao 2) antes.")
+                    return
+                
+                print("\nVoce encontrou um bau na estrada!")
+                newItem = {"name": "Palantir Perdido", "weight": 3.0, "utility": 200}
+                print(f"Item: {newItem['name']} (Peso: {newItem['weight']}, Util: {newItem['utility']})")
+                
+                (kept, discarded, newBag, util, weight) = evaluateEncounter(self.currentAdventureBag, newItem, self.maxCapacity)
+                
+                if kept:
+                    print("DECISAO: Pegar o item!")
+                    print("Para caber no peso, voce descartou: ", [d['name'] for d in discarded])
+                    self.currentAdventureBag = newBag
+                else:
+                    print("DECISAO: Deixar o item (nao vale a pena o peso/utilidade).")
+                
+                print(f"Status Atual da Mochila -> Peso: {weight}/{self.maxCapacity}, Util: {util}")
 
         except ValueError:
-            print("Erro: valor invalido.")
+            print("Erro de valor.")
 
     def _runObjectiveMenu(self):
-        print("\nDEFINIR PROPOSITO DA JORNADA")
-        print("1. Destruir o Um Anel (Minimizar tempo/risco)")
-        print("2. Explorar a Terra Media (Maximizar novos locais)")
-        print("3. Visitar Locais Historicos (Foco em conhecimento)")
-        print("4. Enfraquecer o Mal (Buscar combate)")
-        
+        print("\nDEFINIR PROPOSITO")
+        print("1. Destruir Anel (Rapidez)")
+        print("2. Explorar (Novos locais)")
         try:
-            choice = int(input("Escolha o objetivo prioritario (1-4): "))
-            self.map.setObjective(choice)
-        except ValueError:
-            print("Entrada invalida.")
+            c = int(input("Objetivo: "))
+            self.map.setObjective(c)
+        except: print("Erro")
 
     def _runRelationsMenu(self):
-        # gera ou atualiza as relacoes
         self.relations.buildRelations(self.census, self.history)
+        name = input("\nNome do personagem: ")
+        if name:
+            events = self.relations.getEntityRelations(name)
+            for e in events: print(f"- {e}")
+
+    def _runMapMenu(self):
+        print("\n--- Navegacao (Dijkstra) ---")
+        locs = ["Shire", "Bree", "Rivendell", "Moria", "Lothlorien", "Rohan", "Isengard", "Gondor", "Mordor", "Erebor"]
+        print("Locais:", ", ".join(locs))
         
-        searchName = input("\nDigite o nome de um personagem para ver sua historia (ou ENTER para voltar): ")
-        if searchName:
-            events = self.relations.getEntityRelations(searchName)
-            if events:
-                print(f"Eventos relacionados a {searchName}:")
-                for evt in events:
-                    print(f"- {evt}")
-            else:
-                print("Nenhum evento historico correlacionado encontrado.")
+        start = input("Origem: ")
+        end = input("Destino: ")
+        
+        (cost, path) = self.map.findShortestPath(start, end)
+        
+        if path:
+            print(f"\nRota Calculada (Custo/Dias: {cost}):")
+            print(" -> ".join(path))
+        else:
+            print("Nao foi possivel encontrar um caminho ou locais invalidos.")
 
 if __name__ == "__main__":
     app = RivendellArchiveApp()

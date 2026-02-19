@@ -30,8 +30,8 @@ def solveGreedyKnapsack(supplies, maxCapacity):
 def solveDynamicKnapsack(supplies, maxCapacity):
     # nao podemos dividir itens (ou leva tudo ou nada)
     
-    # como os pesos sao float precisa normalizar para usar como indice da matriz
-    # multiplicamos por 10 (0.5 vira 5)
+    # como os pesos sao float (ex: 0.5), precisamos normalizar para usar como indice da matriz
+    # multiplicamos por 10 para tratar 1 casa decimal (0.5 vira 5)
     precisionFactor = 10
     capacityInt = int(maxCapacity * precisionFactor)
     n = len(supplies)
@@ -80,11 +80,40 @@ def solveDynamicKnapsack(supplies, maxCapacity):
 def optimizeBarter(currentBag, merchantOffers, maxCapacity):
     # combina os itens atuais com a oferta do mercador e re-otimiza
     
-    # pool de todos os itens disponiveis (meus + mercador)
     fullPool = currentBag + merchantOffers
-    
-    # remove duplicatas de referencias se houver, ou trata como itens unicos
-    # aqui assumimos que cada item no pool e uma instancia unica
-    
-    # roda o algoritmo de mochila 0/1 no pool total para achar a melhor combinacao possivel
+    # roda o algoritmo de mochila 0/1 no pool total
     return solveDynamicKnapsack(fullPool, maxCapacity)
+
+def evaluateEncounter(currentBag, newItem, maxCapacity):
+    # avalia se um novo item encontrado deve substituir itens atuais na mochila
+    
+    # cria um pool temporario com o que ja temos + o novo item
+    # nota: precisamos garantir que o newItem tenha o formato correto (dict)
+    pool = currentBag + [newItem]
+    
+    # calcula a melhor configuracao possivel com esse novo pool
+    (newUtil, newWeight, optimizedBag) = solveDynamicKnapsack(pool, maxCapacity)
+    
+    # verifica se o novo item foi incluido na mochila otimizada
+    keptNewItem = False
+    for item in optimizedBag:
+        if item['name'] == newItem['name'] and item['utility'] == newItem['utility']:
+            keptNewItem = True
+            break
+            
+    # identifica itens que foram descartados (estavam na bag antiga mas nao na nova)
+    discardedItems = []
+    currentNames = [i['name'] for i in optimizedBag]
+    
+    for oldItem in currentBag:
+        # logica simplificada de comparacao por nome/utilidade para identificar descarte
+        # (em um sistema real usariamos IDs unicos)
+        found = False
+        for optItem in optimizedBag:
+            if optItem['name'] == oldItem['name'] and optItem['utility'] == oldItem['utility']:
+                found = True
+                break
+        if not found:
+            discardedItems.append(oldItem)
+            
+    return (keptNewItem, discardedItems, optimizedBag, newUtil, newWeight)
