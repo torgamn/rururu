@@ -12,6 +12,20 @@ class MapModule:
             3: {"name": "Eventos Historicos", "focus": "history"},
             4: {"name": "Enfraquecer o Mal", "focus": "combat"}
         }
+        
+        # metadados dos locais para o sistema de confronto
+        self.locationMetadata = {
+            "Shire": {"malice": 0.0, "difficulty": 10},
+            "Bree": {"malice": 0.1, "difficulty": 15},
+            "Rivendell": {"malice": 0.05, "difficulty": 20},
+            "Moria": {"malice": 0.6, "difficulty": 50},
+            "Lothlorien": {"malice": 0.0, "difficulty": 25},
+            "Rohan": {"malice": 0.3, "difficulty": 35},
+            "Isengard": {"malice": 0.7, "difficulty": 55},
+            "Gondor": {"malice": 0.4, "difficulty": 40},
+            "Mordor": {"malice": 0.95, "difficulty": 80},
+            "Erebor": {"malice": 0.5, "difficulty": 45}
+        }
 
     def setObjective(self, objectiveId):
         # define o objetivo da sociedade que afetara os pesos das arestas
@@ -27,10 +41,7 @@ class MapModule:
         print("Cartografia: desenhando o mapa da Terra-Media...")
         
         # vertices (locais)
-        locations = [
-            "Shire", "Bree", "Rivendell", "Moria", "Lothlorien", 
-            "Rohan", "Isengard", "Gondor", "Mordor", "Erebor"
-        ]
+        locations = list(self.locationMetadata.keys())
         
         for loc in locations:
             self.middleEarthMap.addVertex(loc)
@@ -97,3 +108,7 @@ class MapModule:
     def getWeightedEdge(self, weight, edgeAttributes=None):
         # metodo placeholder para calcular peso baseado no objetivo
         return weight
+        
+    def getLocationMetadata(self, locationName):
+        # retorna metadados (malicia, dificuldade) para o modulo de confronto
+        return self.locationMetadata.get(locationName, {"malice": 0.5, "difficulty": 30})

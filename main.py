@@ -7,6 +7,7 @@ from rivendell_archive.modules.almanac_module import AlmanacModule
 from rivendell_archive.modules.logistics_module import solveGreedyKnapsack, solveDynamicKnapsack, optimizeBarter, evaluateEncounter
 from rivendell_archive.modules.map_module import MapModule
 from rivendell_archive.modules.relationship_module import RelationshipModule
+from rivendell_archive.modules.confrontation_module import ConfrontationModule
 from rivendell_archive.core.data_parser import loadSupplies
 
 class RivendellArchiveApp:
@@ -19,6 +20,7 @@ class RivendellArchiveApp:
         self.history = AlmanacModule()
         self.map = MapModule()
         self.relations = RelationshipModule()
+        self.confrontation = ConfrontationModule()
         
         # carregamento inicial de dados
         self._initializeData()
@@ -60,6 +62,7 @@ class RivendellArchiveApp:
             print("5. Definir Objetivo da Sociedade")
             print("6. Analisar Relacoes (Personagens vs Historia)")
             print("7. Navegacao (Mapa/Dijkstra)")
+            print("8. Simular Confronto")
             print("0. Sair")
             
             choice = input("Escolha uma opção: ")
@@ -78,6 +81,8 @@ class RivendellArchiveApp:
                 self._runRelationsMenu()
             elif choice == '7':
                 self._runMapMenu()
+            elif choice == '8':
+                self._runConfrontationTest()
             elif choice == '0':
                 print("Encerrando o Sistema.")
                 break
@@ -235,7 +240,7 @@ class RivendellArchiveApp:
 
     def _runMapMenu(self):
         print("\n--- Navegacao (Dijkstra) ---")
-        locs = ["Shire", "Bree", "Rivendell", "Moria", "Lothlorien", "Rohan", "Isengard", "Gondor", "Mordor", "Erebor"]
+        locs = list(self.map.locationMetadata.keys())
         print("Locais:", ", ".join(locs))
         
         start = input("Origem: ")
@@ -248,6 +253,37 @@ class RivendellArchiveApp:
             print(" -> ".join(path))
         else:
             print("Nao foi possivel encontrar um caminho ou locais invalidos.")
+
+    def _runConfrontationTest(self):
+        print("\n--- Simulador de Confrontos ---")
+        if not self.currentAdventureBag:
+            print("AVISO: Mochila vazia. O Poder de Combate sera baixo.")
+            print("Recomendado montar a mochila no menu 4 antes.")
+            
+        locs = list(self.map.locationMetadata.keys())
+        print("Locais disponiveis:", ", ".join(locs))
+        
+        targetLoc = input("Local de destino para analise: ")
+        
+        if targetLoc not in self.map.locationMetadata:
+            print("Local invalido.")
+            return
+
+        # 1. Calculo de probabilidade
+        prob = self.confrontation.calculateConfrontationProbability(targetLoc, self.map, self.history)
+        
+        # 2. Teste de gatilho
+        triggered = self.confrontation.checkConfrontationTrigger(prob)
+        
+        if triggered:
+            print("ALERTA: INIMIGOS A VISTA! PREPARAR PARA O COMBATE!")
+            # 3. Resolucao do combate
+            (victory, penalty, newBag) = self.confrontation.resolveConfrontation(self.currentAdventureBag, targetLoc, self.map)
+            
+            self.currentAdventureBag = newBag # atualiza a mochila com perdas
+            print(f"Penalidade de Tempo aplicada: +{penalty*100}%")
+        else:
+            print("Caminho seguro. Nenhum confronto ocorreu.")
 
 if __name__ == "__main__":
     app = RivendellArchiveApp()
