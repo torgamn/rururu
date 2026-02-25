@@ -45,7 +45,7 @@ class RelationshipModule:
         seen = set() # evitar duplicatas de eventos
         
         for neighbor, weight in neighbors:
-            if neighbor.startswith("Event:"):
+            if neighbor.startswith("Evento: "):
                 # deduplicacao
                 if neighbor not in seen:
                     events.append(neighbor)

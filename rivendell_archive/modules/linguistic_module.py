@@ -19,7 +19,7 @@ class LinguisticModule:
                 if cleanWord:
                     self.trie.insert(cleanWord)
                     count += 1
-        print(f"palantir linguistico: {count} palavras indexadas.")
+        print(f"Palantir linguistico: {count} palavras indexadas.")
 
     def searchPrefix(self, prefix):
         # utiliza a trie para buscar todas as palavras com este prefixo
