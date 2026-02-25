@@ -1,13 +1,19 @@
-name,weight,utility
-Lembas,0.5,100
-Corda,2.0,60
-Flechas,1.0,40
-Ervas Medicinais,0.2,25
-Odre de Agua,1.5,20
-Cota de Mithril,4.0,150
-Pederneira e Aco,0.1,5
-Espada de reposicao,3.0,30
-Machado,3.5,50
-Balde,1.5,30
-Tocha,1.0,50
-Makita,2.0,100
+id,name,weight,utility
+1,Pao de Lembas,0.5,100
+2,Corda Elfica,1.0,80
+3,Ferroada (Adaga),1.5,150
+4,Cota de Mithril,2.0,300
+5,Frasco de Galadriel,0.2,200
+6,Ervas Curativas (Athelas),0.3,90
+7,Machado Anao,4.0,120
+8,Escudo de Gondor,3.5,110
+9,Erva-de-fumo dos Hobbits,0.5,30
+10,Berrante de Rohan,1.2,85
+11,Racoes de Ferro,2.5,70
+12,Tenda de Acampamento,5.0,60
+13,Tocha,1.0,40
+14,Cantil de Agua,1.0,50
+15,Arco Longo de Lorien,2.0,160
+16,Capa Elfica (Camuflagem),1.0,130
+17,Espada Anduril,3.0,250
+18,Cajado de Mago,2.5,220

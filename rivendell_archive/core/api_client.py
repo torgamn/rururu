@@ -11,7 +11,7 @@ def getHeaders():
     
     if not theOneApiKey:
         # erro se a chave nao estiver configurada
-        print('erro: variavel de ambiente THE_ONE_API_KEY nao definida.')
+        print('Erro: Variavel de ambiente THE_ONE_API_KEY nao definida.')
         return None
         
     return {
@@ -49,7 +49,7 @@ def getAllPaginatedData(endpointUrl):
             page += 1
             
         except requests.exceptions.RequestException as e:
-            print(f'erro ao buscar dados da api (pagina {page}): {e}')
+            print(f'Erro ao buscar dados da api (pagina {page}): {e}')
             return None # retorna none em caso de falha
 
     return results
@@ -60,7 +60,7 @@ def getCharacters():
     # /character e um endpoint da the one api
     endpoint = f'{baseUrl}/character'
     
-    print(f'buscando todos os personagens de {endpoint}...')
+    print(f'Buscando todos os personagens de {endpoint}...')
     characters = getAllPaginatedData(endpoint)
     print(f'{len(characters)} personagens encontrados.')
     

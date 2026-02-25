@@ -25,16 +25,17 @@ class RivendellArchiveApp:
         # carregamento inicial de dados
         self._initializeData()
         
-        # estado da mochila atual
+        # estado da mochila e objetivo atual
         self.currentAdventureBag = []
         self.maxCapacity = 0.0
+        self.currentObjective = None
 
     def _initializeData(self):
         # carrega hash table
         self.census.loadData()
         
         namesToIndex = []
-        # utiliza o novo metodo toList da hash table para pegar nomes
+        # utiliza o metodo tolist da hash table para pegar nomes
         censusItems = self.census.censusData.toList()
         for key, value in censusItems:
             if isinstance(key, str):
@@ -55,14 +56,15 @@ class RivendellArchiveApp:
     def run(self):
         while True:
             print("\nO ARQUIVO DE RIVENDELL (MENU PRINCIPAL)")
-            print("1. Consultar Censo (Personagens/Locais)")
+            print("1. Consultar Censo (Personagens)")
             print("2. Modulo Linguistico (Busca/Correcao)")
             print("3. Consultar Almanaque Historico (Eventos)")
             print("4. Planejar Logistica (Mochila/Escambo/Encontros)")
             print("5. Definir Objetivo da Sociedade")
-            print("6. Analisar Relacoes (Personagens vs Historia)")
+            print("6. Analisar Relacoes (Personagens e Historia)")
             print("7. Navegacao (Mapa/Dijkstra)")
             print("8. Simular Confronto")
+            print("9. Iniciar Jornada")
             print("0. Sair")
             
             choice = input("Escolha uma opção: ")
@@ -83,27 +85,29 @@ class RivendellArchiveApp:
                 self._runMapMenu()
             elif choice == '8':
                 self._runConfrontationTest()
+            elif choice == '9':
+                self._runIntegratedJourney()
             elif choice == '0':
-                print("Encerrando o Sistema.")
+                print("Encerrando o sistema.")
                 break
             else:
-                print("Opção invalida.")
+                print("Opcao invalida.")
 
     def _runCensusMenu(self):
         name = input("Digite o nome do personagem para buscar: ")
         result = self.census.searchEntity(name)
         if result:
             print("\nREGISTRO ENCONTRADO")
-            print(f"Nome: {result.get('name', 'N/A')}")
-            print(f"Raca: {result.get('race', 'N/A')}")
-            print(f"Reino: {result.get('realm', 'N/A')}")
+            print(f"nome: {result.get('name', 'N/A')}")
+            print(f"raca: {result.get('race', 'N/A')}")
+            print(f"reino: {result.get('realm', 'N/A')}")
             if 'wikiUrl' in result:
-                print(f"Wiki: {result['wikiUrl']}")
+                print(f"wiki: {result['wikiUrl']}")
         else:
-            print("Personagem não encontrado no arquivo.")
+            print("Personagem nao encontrado.")
 
     def _runLanguageMenu(self):
-        print("1. Busca por Prefixo (Autocomplete)")
+        print("\n1. Busca por Prefixo (Autocomplete)")
         print("2. Corretor Ortografico (Levenshtein)")
         sub = input("Opcao: ")
         
@@ -119,8 +123,11 @@ class RivendellArchiveApp:
         elif sub == '2':
             word = input("Digite a palavra para verificar: ")
             (suggestion, dist) = self.language.checkSpelling(word)
-            print(f"\nEntrada: {word}")
-            print(f"Sugestao: {suggestion} (Distancia: {dist})")
+            print(f"\nentrada: {word}")
+            if dist == 0:
+                print("A palavra ja esta correta no dicionario elfico.")
+            else:
+                print(f"Sugestao: {suggestion} (distancia de correcao: {dist})")
 
     def _runHistoryMenu(self):
         print("1. Buscar ano especifico")
@@ -146,90 +153,108 @@ class RivendellArchiveApp:
                 else:
                     print("Nenhum evento encontrado neste periodo.")
         except ValueError:
-            print("Por favor digite apenas numeros para os anos.")
+            print("Digite apenas numeros para os anos.")
 
     def _runLogisticsMenu(self):
-        print("\n--- Modulo de Logistica ---")
+        print("\nModulo de Logistica")
         print("1. Otimizacao Gulosa (Mochila Fracionaria)")
         print("2. Otimizacao Avancada (Mochila 0/1 - Prog. Dinamica)")
         print("3. Simular Escambo (Troca em Assentamento)")
         print("4. Encontro na Estrada (Avaliar novo item)")
         
-        subChoice = input("Opcao: ")
+        subChoice = input("opcao: ")
         
-        # so carrega se nao tivermos uma mochila carregada ou se o usuario quiser resetar
         if not self.currentAdventureBag and subChoice in ['1', '2']:
             print("Carregando lista padrao de suprimentos...")
             supplies = loadSupplies()
             if not supplies:
                 return
         else:
-            # usa a mochila atual para escambos e encontros
             supplies = self.currentAdventureBag
-            if subChoice in ['1', '2']: # se escolher recriar, recarrega
+            if subChoice in ['1', '2']: 
                 supplies = loadSupplies()
 
         try:
             if subChoice == '1':
                 cap = float(input("Capacidade maxima: "))
+                self.maxCapacity = cap 
                 (util, weight, items) = solveGreedyKnapsack(supplies, cap)
-                print(f"Mochila Gulosa montada. Util: {util}, Peso: {weight}")
+                self.currentAdventureBag = items # agora a mochila gulosa alimenta o estado
+                print(f"Mochila gulosa montada. util: {util}, peso: {weight}")
+                for i in items: print(f"- {i['name']}")
                 
             elif subChoice == '2':
                 cap = float(input("Capacidade maxima: "))
-                self.maxCapacity = cap # salva capacidade para usos futuros
+                self.maxCapacity = cap 
                 (util, weight, items) = solveDynamicKnapsack(supplies, cap)
                 self.currentAdventureBag = items
-                print(f"\nMochila Dinamica Otimizada! Utilidade: {util}, Peso: {weight}")
+                print(f"\nMochila dinamica otimizada! utilidade: {util}, peso: {weight}")
                 for i in items: print(f"- {i['name']}")
 
             elif subChoice == '3':
                 if not self.currentAdventureBag:
-                    print("Mochila vazia. Crie uma mochila (Opcao 2) antes.")
+                    print("Mochila vazia. crie uma mochila (opcao 1 ou 2) antes.")
                     return
                 
-                print(f"Simulando mercado em Moria...")
+                print(f"Simulando mercado:")
                 merchantOffers = [
                     {"name": "Machado de Duas Maos", "weight": 4.5, "utility": 180},
                     {"name": "Escudo de Ferro", "weight": 3.0, "utility": 90}
                 ]
-                print("Ofertas: Machado (180 util), Escudo (90 util)")
+                print("Ofertas: machado (180 util), escudo (90 util)")
                 
                 (util, weight, newItems) = optimizeBarter(self.currentAdventureBag, merchantOffers, self.maxCapacity)
                 self.currentAdventureBag = newItems
-                print(f"Troca realizada. Nova Utilidade: {util}")
+                print(f"Troca realizada. nova utilidade: {util}")
 
             elif subChoice == '4':
                 if not self.currentAdventureBag:
-                    print("Mochila vazia. Crie uma mochila (Opcao 2) antes.")
+                    print("Mochila vazia. crie uma mochila (opcao 1 ou 2) antes.")
                     return
                 
                 print("\nVoce encontrou um bau na estrada!")
                 newItem = {"name": "Palantir Perdido", "weight": 3.0, "utility": 200}
-                print(f"Item: {newItem['name']} (Peso: {newItem['weight']}, Util: {newItem['utility']})")
+                print(f"item: {newItem['name']} (peso: {newItem['weight']}, util: {newItem['utility']})")
                 
                 (kept, discarded, newBag, util, weight) = evaluateEncounter(self.currentAdventureBag, newItem, self.maxCapacity)
                 
                 if kept:
-                    print("DECISAO: Pegar o item!")
+                    print("Decisao: pegar o item!")
                     print("Para caber no peso, voce descartou: ", [d['name'] for d in discarded])
                     self.currentAdventureBag = newBag
                 else:
-                    print("DECISAO: Deixar o item (nao vale a pena o peso/utilidade).")
+                    print("Decisao: deixar o item (nao vale a pena o peso/utilidade).")
                 
-                print(f"Status Atual da Mochila -> Peso: {weight}/{self.maxCapacity}, Util: {util}")
+                print(f"Status atual da mochila -> peso: {weight}/{self.maxCapacity}, util: {util}")
 
         except ValueError:
             print("Erro de valor.")
 
     def _runObjectiveMenu(self):
-        print("\nDEFINIR PROPOSITO")
-        print("1. Destruir Anel (Rapidez)")
-        print("2. Explorar (Novos locais)")
+        print("\nDEFINIR PROPOSITO DA SOCIEDADE")
+        print("1. Destruir o Anel (Rapidez)")
+        print("2. Explorar a Terra Media (Novos caminhos)")
+        print("3. Visitar Locais Historicos (Conhecimento)")
+        print("4. Combate (Gloria e XP)")
         try:
-            c = int(input("Objetivo: "))
+            c = int(input("Escolha o objetivo (1-4): "))
             self.map.setObjective(c)
-        except: print("Erro")
+            self.currentObjective = c # salva o objetivo escolhido no estado
+            print("\n[!] Proposito redefinido com sucesso.")
+            
+            if c == 1:
+                print("-> Atributos alterados: pesos do grafo agora usam estritamente o fator tempo/distancia. locais de alto risco sao ignorados pelo dijkstra se a rota for rapida.")
+            elif c == 2:
+                print("-> Atributos alterados: rotas para locais nao descobertos ou remotos receberam reducao de custo nas arestas para incentivar a exploracao.")
+            elif c == 3:
+                print("-> Atributos alterados: a otimizacao de rota sera baseada na passagem por locais com a maior contagem de eventos historicos.")
+            elif c == 4:
+                print("-> Atributos alterados: caminhos onde batalhas ocorreram tem prioridade, recebendo descontos artificiais na distancia para atrair a rota.")
+            else:
+                print("-> Objetivo desconhecido selecionado.")
+                self.currentObjective = None # reseta se inserido invalido
+        except ValueError:
+            print("Erro: Insira apenas numeros validos.")
 
     def _runRelationsMenu(self):
         self.relations.buildRelations(self.census, self.history)
@@ -239,7 +264,7 @@ class RivendellArchiveApp:
             for e in events: print(f"- {e}")
 
     def _runMapMenu(self):
-        print("\n--- Navegacao (Dijkstra) ---")
+        print("\nNavegacao (Dijkstra)")
         locs = list(self.map.locationMetadata.keys())
         print("Locais:", ", ".join(locs))
         
@@ -249,15 +274,15 @@ class RivendellArchiveApp:
         (cost, path) = self.map.findShortestPath(start, end)
         
         if path:
-            print(f"\nRota Calculada (Custo/Dias: {cost}):")
+            print(f"\nRota calculada (custo/dias: {cost}):")
             print(" -> ".join(path))
         else:
-            print("Nao foi possivel encontrar um caminho ou locais invalidos.")
+            print("Não foi possivel encontrar um caminho ou locais invalidos.")
 
     def _runConfrontationTest(self):
-        print("\n--- Simulador de Confrontos ---")
+        print("\nSimulador de Confrontos")
         if not self.currentAdventureBag:
-            print("AVISO: Mochila vazia. O Poder de Combate sera baixo.")
+            print("Aviso: mochila vazia. o poder de combate sera baixo.")
             print("Recomendado montar a mochila no menu 4 antes.")
             
         locs = list(self.map.locationMetadata.keys())
@@ -269,21 +294,82 @@ class RivendellArchiveApp:
             print("Local invalido.")
             return
 
-        # 1. Calculo de probabilidade
         prob = self.confrontation.calculateConfrontationProbability(targetLoc, self.map, self.history)
-        
-        # 2. Teste de gatilho
         triggered = self.confrontation.checkConfrontationTrigger(prob)
         
         if triggered:
-            print("ALERTA: INIMIGOS A VISTA! PREPARAR PARA O COMBATE!")
-            # 3. Resolucao do combate
+            print("Inimigos a vista! preparar para o combate!")
             (victory, penalty, newBag) = self.confrontation.resolveConfrontation(self.currentAdventureBag, targetLoc, self.map)
-            
-            self.currentAdventureBag = newBag # atualiza a mochila com perdas
-            print(f"Penalidade de Tempo aplicada: +{penalty*100}%")
+            self.currentAdventureBag = newBag 
+            print(f"Penalidade de tempo aplicada: +{penalty*100}%")
         else:
-            print("Caminho seguro. Nenhum confronto ocorreu.")
+            print("Caminho seguro. nenhum confronto ocorreu.")
+
+    def _runIntegratedJourney(self):
+        print("\nA JORNADA")
+        
+        # validacao 1: objetivo definido
+        if not self.currentObjective:
+            print("A sociedade precisa de um proposito! defina o objetivo (menu 5) primeiro.")
+            return
+            
+        # validacao 2: mochila montada
+        if not self.currentAdventureBag:
+            print("A sociedade esta viajando sem suprimentos! prepare a mochila (menu 4) primeiro.")
+            return
+            
+        locs = list(self.map.locationMetadata.keys())
+        print("Locais possiveis:", ", ".join(locs))
+        
+        start = input("Local de partida: ")
+        end = input("Local de destino: ")
+        
+        (cost, path) = self.map.findShortestPath(start, end)
+        
+        if not path:
+            print("Não há rotas conhecidas para este destino.")
+            return
+            
+        print(f"\nPLANEJAMENTO DE ROTA")
+        print(f"Caminho tracado: {' -> '.join(path)}")
+        print(f"Estimativa otimista de viagem: {cost} dias.")
+        
+        totalDays = 0.0
+        
+        for i in range(len(path) - 1):
+            currentLoc = path[i]
+            nextLoc = path[i+1]
+            
+            print(f"\nViajando de {currentLoc} para {nextLoc}...")
+            
+            baseTime = 1.0 
+            for neighbor, weight in self.map.middleEarthMap.getNeighbors(currentLoc):
+                if neighbor == nextLoc:
+                    baseTime = weight
+                    break
+            
+            prob = self.confrontation.calculateConfrontationProbability(nextLoc, self.map, self.history)
+            triggered = self.confrontation.checkConfrontationTrigger(prob)
+            
+            if triggered:
+                print(f"EMBOSCADA A CAMINHO DE {nextLoc.upper()}")
+                (victory, penaltyPercent, newBag) = self.confrontation.resolveConfrontation(self.currentAdventureBag, nextLoc, self.map)
+                self.currentAdventureBag = newBag
+                
+                penaltyDays = baseTime * penaltyPercent
+                totalDays += (baseTime + penaltyDays)
+                print(f"[x] Dias decorridos no trecho: {baseTime} (base) + {penaltyDays:.1f} (penalidade/atrasos) = {baseTime + penaltyDays:.1f} dias")
+            else:
+                print(f"[*] Os caminhos estao quietos. viagem sem interrupcoes.")
+                totalDays += baseTime
+                print(f"[x] Dias decorridos no trecho: {baseTime} dias")
+                
+            currentUtil = sum(item['utility'] for item in self.currentAdventureBag)
+            print(f"[*] Status da sociedade: {len(self.currentAdventureBag)} itens restantes (utilidade total: {currentUtil})")
+            
+        print(f"\nFIM DA JORNADA")
+        print(f"Destino alcancado: {end}")
+        print(f"Tempo total real gasto na jornada: {totalDays:.1f} dias.")
 
 if __name__ == "__main__":
     app = RivendellArchiveApp()

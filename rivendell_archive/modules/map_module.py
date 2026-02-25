@@ -28,7 +28,7 @@ class MapModule:
         }
 
     def setObjective(self, objectiveId):
-        # define o objetivo da sociedade que afetara os pesos das arestas
+        # define o objetivo da sociedade que afeta os pesos das arestas
         if objectiveId in self.objectives:
             self.currentObjective = self.objectives[objectiveId]
             print(f"Objetivo definido: {self.currentObjective['name']}")
@@ -38,8 +38,6 @@ class MapModule:
 
     def loadMapData(self):
         # carrega os dados geograficos (locais e rotas)
-        print("Cartografia: desenhando o mapa da Terra-Media...")
-        
         # vertices (locais)
         locations = list(self.locationMetadata.keys())
         
@@ -73,7 +71,7 @@ class MapModule:
         print(f"Mapa carregado: {len(locations)} locais e {countRoutes * 2} conexoes mapeadas.")
 
     def findShortestPath(self, startNode, endNode):
-        # milestone 2/6: algoritmo de dijkstra para menor caminho
+        # algoritmo de dijkstra para menor caminho
         print(f"Calculando rota de {startNode} para {endNode}...")
         
         # fila de prioridade armazena tuplas (custo, vertice_atual, caminho_percorrido)
@@ -99,14 +97,14 @@ class MapModule:
             if neighbors:
                 for neighbor, weight in neighbors:
                     if neighbor not in visited:
-                        # aqui poderiamos ajustar o peso baseado no objetivo (penalidade)
-                        # por enquanto usamos o peso direto (tempo)
+                        # poderia ajustar o peso baseado no objetivo (penalidade)
+                        # usamos o peso direto (tempo)
                         heapq.heappush(queue, (cost + weight, neighbor, path))
                         
         return (float('inf'), []) # caminho nao encontrado
 
     def getWeightedEdge(self, weight, edgeAttributes=None):
-        # metodo placeholder para calcular peso baseado no objetivo
+        # placeholder para calcular peso baseado no objetivo
         return weight
         
     def getLocationMetadata(self, locationName):

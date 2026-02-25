@@ -10,18 +10,16 @@ class RelationshipModule:
         print("Analisando pergaminhos para encontrar conexoes...")
         
         # obtem todas as entidades do censo
-        # acessa os dados usando o metodo helper criado na hash table
         censusItems = censusModule.censusData.toList()
         
         # obtem todos os eventos do almanaque
-        # acessa os dados usando o metodo helper criado na b-tree
         historyItems = almanacModule.chronicles.toList()
         
         connectionsCount = 0
         
         for year, description in historyItems:
             # cria um no para o evento
-            eventNode = f"Event:{year}"
+            eventNode = f"Evento: {year}"
             self.relationshipGraph.addVertex(eventNode)
             
             # verifica se algum personagem conhecido esta na descricao do evento
@@ -38,13 +36,19 @@ class RelationshipModule:
                     self.relationshipGraph.addEdge(charName, eventNode, weight=1)
                     connectionsCount += 1
                     
-        print(f"Grafo de Relacoes gerado: {connectionsCount} conexoes encontradas entre Personagens e Historia.")
+        print(f"Grafo de relacoes gerado: {connectionsCount} conexoes encontradas entre personagens e historia.")
 
     def getEntityRelations(self, entityName):
         # retorna eventos relacionados a uma entidade
         neighbors = self.relationshipGraph.getNeighbors(entityName)
         events = []
+        seen = set() # evitar duplicatas de eventos
+        
         for neighbor, weight in neighbors:
             if neighbor.startswith("Event:"):
-                events.append(neighbor)
+                # deduplicacao
+                if neighbor not in seen:
+                    events.append(neighbor)
+                    seen.add(neighbor)
+                    
         return events
