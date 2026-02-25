@@ -157,8 +157,8 @@ class RivendellArchiveApp:
 
     def _runLogisticsMenu(self):
         print("\nModulo de Logistica")
-        print("1. Otimizacao Gulosa (Mochila Fracionaria)")
-        print("2. Otimizacao Avancada (Mochila 0/1 - Prog. Dinamica)")
+        print("1. Otimizacao Gulosa")
+        print("2. Otimizacao Avancada")
         print("3. Simular Escambo (Troca em Assentamento)")
         print("4. Encontro na Estrada (Avaliar novo item)")
         
